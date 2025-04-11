@@ -1,0 +1,19 @@
+Server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: edu-block-api
+
+  r2dbc:
+    url: ${DATA_SOURCE_URL:r2dbc:postgresql://postgres:5432/edu2}
+    username: ${DATA_SOURCE_USERNAME:postgres}
+    password: ${DATA_SOURCE_PASSWORD:4}
+
+  flyway:
+    url: ${FLYWAY-DATA_SOURCE_URL:jdbc:postgresql://localhost:5432/edu2}
+    locations: classpath:db/migration
+    user: ${DATA_SOURCE_USERNAME:postgres}
+    password: ${DATA_SOURCE_PASSWORD:4}
+    driver-class-name: org.postgresql.Driver
+
