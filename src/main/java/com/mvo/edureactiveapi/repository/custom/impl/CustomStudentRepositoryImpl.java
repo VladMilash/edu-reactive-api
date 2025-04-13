@@ -9,11 +9,15 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RequiredArgsConstructor
 @Repository
 public class CustomStudentRepositoryImpl implements CustomStudentRepository {
     private final DatabaseClient databaseClient;
     private final StudentCustomMapper mapper;
+    private final Map<Long, Integer> counterStudent = new HashMap<>();
 
     @Override
     public Flux<ResponseStudentDTO> getAllWithCoursesAndTeacher() {
@@ -29,7 +33,7 @@ public class CustomStudentRepositoryImpl implements CustomStudentRepository {
        Flux<ResponseStudentDTO> result = databaseClient.sql(query)
            .map(mapper::apply)
            .all();
-
         return result;
+
     }
 }

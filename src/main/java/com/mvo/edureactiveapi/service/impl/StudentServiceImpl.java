@@ -2,10 +2,9 @@ package com.mvo.edureactiveapi.service.impl;
 
 import com.mvo.edureactiveapi.dto.requestdto.StudentTransientDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseStudentDTO;
-import com.mvo.edureactiveapi.entity.Course;
 import com.mvo.edureactiveapi.entity.Student;
+import com.mvo.edureactiveapi.mapper.StudentCustomMapper;
 import com.mvo.edureactiveapi.mapper.StudentMapper;
-import com.mvo.edureactiveapi.repository.CourseRepository;
 import com.mvo.edureactiveapi.repository.StudentRepository;
 import com.mvo.edureactiveapi.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -14,15 +13,13 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
-import java.util.stream.Collectors;
-
 @RequiredArgsConstructor
 @Service
 @Slf4j
 public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     private final StudentMapper studentMapper;
+    private final StudentCustomMapper studentCustomMapper;
 
 
     @Override
@@ -46,7 +43,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Flux<ResponseStudentDTO> getAll() {
-        return studentRepository.getAllWithCoursesAndTeacher()
-            .doOnError(error ->log.error(""));
+        return studentCustomMapper.processing(studentRepository.getAllWithCoursesAndTeacher())
+            .doOnError(error -> log.error(""));
     }
 }
