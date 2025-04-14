@@ -43,7 +43,6 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Flux<ResponseStudentDTO> getAll() {
-        return studentCustomMapper.processing(studentRepository.getAllWithCoursesAndTeacher())
-            .doOnError(error -> log.error(""));
+        return studentRepository.getAllWithCoursesAndTeacher();
     }
 }
