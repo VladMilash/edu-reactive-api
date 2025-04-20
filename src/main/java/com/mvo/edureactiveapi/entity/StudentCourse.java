@@ -8,18 +8,15 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "course")
+@Table(name = "student_course")
 @Data
-public class Course {
+public class StudentCourse {
     @Id
     private Long id;
 
-    @Column("title")
-    private String title;
+    @Column("course_id")
+    private Long courseId;
 
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    @Column("teacher_id")
-    private Long teacherId;
-
+    @Column("student_id")
+    private Long studentId;
 }

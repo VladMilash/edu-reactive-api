@@ -6,6 +6,8 @@ import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
+
 @Repository
 public interface CourseRepository extends R2dbcRepository<Course, Long> {
     @Query("""
@@ -16,4 +18,7 @@ public interface CourseRepository extends R2dbcRepository<Course, Long> {
         WHERE s_c.student_id = :student_id
         """)
     Flux<Course> getCoursesWithTeachersByStudentId(Long studentId);
+
+    Flux<Course> findAllByIdIn(List<Long> courseIds);
+
 }
