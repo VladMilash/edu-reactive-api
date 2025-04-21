@@ -9,4 +9,5 @@ import reactor.core.publisher.Mono;
 public interface StudentService {
     Mono<ResponseStudentDTO> save(StudentTransientDTO studentTransientDTO);
     Flux<ResponseStudentDTO> getAll();
+    Mono<ResponseStudentDTO> getById(Long id);
 }

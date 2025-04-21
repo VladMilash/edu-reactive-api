@@ -23,4 +23,9 @@ public class StudentsRestControllerV1 {
     public Flux<ResponseStudentDTO> getAll() {
         return service.getAll();
     }
+
+    @GetMapping("{id}")
+    public Mono<ResponseStudentDTO> getById(@PathVariable Long id) {
+        return service.getById(id);
+    }
 }

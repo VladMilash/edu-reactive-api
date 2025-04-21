@@ -9,4 +9,6 @@ import java.util.List;
 public interface StudentCourseRepository extends R2dbcRepository<StudentCourse, Long> {
 
     Flux<StudentCourse> findAllByStudentIdIn(List<Long> studentIds);
+
+    Flux<StudentCourse> findAllByStudentId(Long id);
 }
