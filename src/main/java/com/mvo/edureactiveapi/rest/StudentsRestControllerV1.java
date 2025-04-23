@@ -1,6 +1,8 @@
 package com.mvo.edureactiveapi.rest;
 
+import com.mvo.edureactiveapi.dto.CourseDTO;
 import com.mvo.edureactiveapi.dto.requestdto.StudentTransientDTO;
+import com.mvo.edureactiveapi.dto.responsedto.DeleteResponseDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseStudentDTO;
 import com.mvo.edureactiveapi.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +29,25 @@ public class StudentsRestControllerV1 {
     @GetMapping("{id}")
     public Mono<ResponseStudentDTO> getById(@PathVariable Long id) {
         return service.getById(id);
+    }
+
+    @PutMapping("{id}")
+    public Mono<ResponseStudentDTO> update(@PathVariable Long id, @RequestBody StudentTransientDTO studentTransientDTO) {
+        return service.update(id, studentTransientDTO);
+    }
+
+    @PostMapping("{studentId}/courses/{courseId}")
+    public Mono<ResponseStudentDTO> setRelationWithCourse(@PathVariable Long studentId, @PathVariable Long courseId) {
+        return service.setRelationWithCourse(studentId, courseId);
+    }
+
+    @GetMapping("{id}/courses")
+    public Flux<CourseDTO> getStudentCourses(@PathVariable Long id) {
+        return service.getStudentCourses(id);
+    }
+
+    @DeleteMapping("{id}")
+    public Mono<DeleteResponseDTO> delete(@PathVariable Long id) {
+        return service.delete(id);
     }
 }

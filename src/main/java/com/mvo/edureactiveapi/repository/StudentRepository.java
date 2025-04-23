@@ -11,5 +11,6 @@ public interface StudentRepository extends R2dbcRepository<Student, Long>, Custo
    Mono<Student> findByEmail(String email);
 
    Mono<Boolean> existsByEmail(String email);
+
 }
 
