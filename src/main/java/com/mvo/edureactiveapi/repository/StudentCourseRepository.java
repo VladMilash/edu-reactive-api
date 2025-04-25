@@ -11,6 +11,8 @@ public interface StudentCourseRepository extends R2dbcRepository<StudentCourse, 
 
     Flux<StudentCourse> findAllByStudentIdIn(List<Long> studentIds);
 
+    Flux<StudentCourse> findAllByCourseIdIn(List<Long> courseIds);
+
     Flux<StudentCourse> findAllByStudentId(Long id);
 
     Mono<StudentCourse> findAllByStudentIdAndCourseIdIs(Long studentId, Long courseId);
