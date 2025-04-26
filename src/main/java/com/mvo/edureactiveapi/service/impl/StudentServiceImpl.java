@@ -63,16 +63,9 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public Flux<ResponseStudentDTO> getAll() {
         Flux<Student> students = studentRepository.findAll().cache();
-        Mono<List<Long>> studentsIds = students.map(Student::getId).collectList().cache();
-
-        Flux<StudentCourse> studentCourses = studentsIds.flatMapMany(studentCourseRepository::findAllByStudentIdIn).cache();
-        Mono<List<Long>> coursesIds = getCourseIds(studentCourses);
-
-        Flux<Course> courses = coursesIds.flatMapMany(courseRepository::findAllByIdIn).cache();
-        Mono<List<Long>> teachersIds = getTeacherIds(courses);
-
-        Flux<Teacher> teachers = getTeachers(teachersIds);
-
+        Flux<StudentCourse> studentCourses = getStudentCourseFlux(students);
+        Flux<Course> courses = getCourseFlux(studentCourses);
+        Flux<Teacher> teachers = getTeacherFlux(courses);
         return Mono.zip(
             students.collectList(),
             studentCourses.collectList(),
@@ -83,49 +76,24 @@ public class StudentServiceImpl implements StudentService {
             List<StudentCourse> studentCourseList = tuple.getT2();
             List<Course> courseList = tuple.getT3();
             List<Teacher> teachersList = tuple.getT4();
-
             Map<Long, Teacher> teacherMap = getTeacherMap(teachersList);
-
             Map<Long, Course> courseMap = getCourseMap(courseList);
-
             Map<Long, List<Long>> studentToCourses = getStudentToCourses(studentCourseList);
-
             return Flux.fromIterable(studentList)
                 .map(student -> {
-                    List<Long> studentCourseIds = studentToCourses
-                        .getOrDefault(student.getId(), Collections.emptyList());
-
-                    Set<CourseDTO> courseDTOs = studentCourseIds.stream()
-                        .map(courseId -> {
-                            Course course = courseMap.get(courseId);
-                            TeacherDTO teacherDTO = getTeacherDTO(course, teacherMap);
-                            return new CourseDTO(course.getId(), course.getTitle(), teacherDTO);
-                        })
-                        .collect(Collectors.toSet());
-
-                    return new ResponseStudentDTO(
-                        student.getId(),
-                        student.getName(),
-                        student.getEmail(),
-                        courseDTOs
-                    );
+                    Set<CourseDTO> courseDTOs = getCourseDTOs(student, studentToCourses, courseMap, teacherMap);
+                    return getResponseStudentDTO(student, courseDTOs);
                 });
             })
             .doOnComplete(() -> log.info("Successfully retrieved all students"))
             .doOnError(error -> log.error("Failed to found all students"));
     }
 
-
     @Override
     public Mono<ResponseStudentDTO> getById(Long id) {
-        Mono<Student> student = studentRepository.findById(id).cache()
-            .switchIfEmpty(Mono.error(new NotFoundEntityException("Student with ID " + id + " not found")));
-        Flux<StudentCourse> studentCourses = studentCourseRepository.findAllByStudentId(id);
-        Mono<List<Long>> courseIds = getCourseIds(studentCourses);
-        Flux<Course> courses = courseIds.flatMapMany(courseRepository::findAllByIdIn);
-        Mono<List<Long>> teacherIds = getTeacherIds(courses);
-        Flux<Teacher> teachers = getTeachers(teacherIds);
-
+        Mono<Student> student = getStudent(id);
+        Flux<Course> courses = getCourseFlux(id);
+        Flux<Teacher> teachers = getTeacherFlux(courses);
         return Mono.zip(
             student,
             courses.collectList(),
@@ -134,23 +102,9 @@ public class StudentServiceImpl implements StudentService {
             Student studentEntity = tuple.getT1();
             List<Course> courseList = tuple.getT2();
             List<Teacher> teacherList = tuple.getT3();
-
             Map<Long, Teacher> teacherMap = getTeacherMap(teacherList);
-
-            Set<CourseDTO> courseDTOs = courseList
-                .stream()
-                .map(course -> {
-                    TeacherDTO teacherDTO = getTeacherDTO(course, teacherMap);
-                    return new CourseDTO(course.getId(), course.getTitle(), teacherDTO);
-                })
-                .collect(Collectors.toSet());
-
-            return new ResponseStudentDTO(
-                studentEntity.getId(),
-                studentEntity.getName(),
-                studentEntity.getEmail(),
-                courseDTOs
-            );
+                Set<CourseDTO> courseDTOs = getCourseDTOs(courseList, teacherMap);
+                return getResponseStudentDTO(studentEntity, courseDTOs);
             })
             .doOnSuccess(responseStudentDTO -> log.info("Student successfully found with id: {}", responseStudentDTO.id()))
             .doOnError(error -> log.error("Failed to found student with id: {}", id));
@@ -159,8 +113,9 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Override
     public Mono<ResponseStudentDTO> update(Long id, StudentTransientDTO studentTransientDTO) {
-        return studentRepository.findById(id)
-            .switchIfEmpty(Mono.error(new NotFoundEntityException("Student with ID " + id + " not found")))
+        log.info("Started update student with id: {}", id);
+        Mono<Student> studentForUpdate = getStudentMono(id);
+        return studentForUpdate
             .flatMap(foundedStudent -> {
                 foundedStudent.setName(studentTransientDTO.name());
                 foundedStudent.setEmail(studentTransientDTO.email());
@@ -173,14 +128,13 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Mono<DeleteResponseDTO> delete(Long id) {
-        return studentRepository.findById(id)
-            .switchIfEmpty(Mono.error(new NotFoundEntityException("Student with ID " + id + " not found")))
-            .flatMap(student -> {
-                return studentRepository.delete(student)
-                    .doOnSuccess(studentDeleted -> log.info("Student with id: {} successfully deleted", id))
-                    .doOnError(error -> log.error("Failed to delete student", error))
-                    .then(Mono.just(new DeleteResponseDTO("Student deleted successfully")));
-            });
+        log.info("Started delete student with id: {}", id);
+        Mono<Student> studentForDelete = getStudentMono(id);
+        return studentForDelete
+            .flatMap(studentRepository::delete)
+            .doOnSuccess(studentDeleted -> log.info("Student with id: {} successfully deleted", id))
+            .doOnError(error -> log.error("Failed to delete student", error))
+            .then(Mono.just(new DeleteResponseDTO("Student deleted successfully")));
     }
 
     @Transactional
@@ -188,7 +142,6 @@ public class StudentServiceImpl implements StudentService {
     public Mono<ResponseStudentDTO> setRelationWithCourse(Long studentId, Long courseId) {
         Mono<Student> studentMono = getStudentMono(studentId);
         Mono<Course> courseMono = getCourseMono(courseId);
-
         return Mono.zip(
                 studentMono,
                 courseMono
@@ -208,17 +161,11 @@ public class StudentServiceImpl implements StudentService {
             .doOnError(error -> log.error("Failed to set relation between student {} and course {}", studentId, courseId, error));
     }
 
-
     @Override
     public Flux<CourseDTO> getStudentCourses(Long id) {
         Mono<Student> student = getStudentMono(id);
-
-        Flux<StudentCourse> studentCourses = studentCourseRepository.findAllByStudentId(id);
-        Mono<List<Long>> courseIds = getCourseIds(studentCourses);
-        Flux<Course> courses = courseIds.flatMapMany(courseRepository::findAllByIdIn);
-        Mono<List<Long>> teacherIds = getTeacherIds(courses);
-        Flux<Teacher> teachers = getTeachers(teacherIds);
-
+        Flux<Course> courses = getCourseFlux(id);
+        Flux<Teacher> teachers = getTeacherFlux(courses);
         return Mono.zip(
                 student,
                 courses.collectList(),
@@ -226,18 +173,78 @@ public class StudentServiceImpl implements StudentService {
             ).flatMapMany(tuple -> {
                 List<Course> courseList = tuple.getT2();
                 List<Teacher> teacherList = tuple.getT3();
-
                 Map<Long, Teacher> teacherMap = getTeacherMap(teacherList);
-
-                return Flux.fromStream(courseList
-                    .stream()
-                    .map(course -> {
-                        TeacherDTO teacherDTO = getTeacherDTO(course, teacherMap);
-                        return new CourseDTO(course.getId(), course.getTitle(), teacherDTO);
-                    }));
+                return getCourseDTOFlux(courseList, teacherMap);
             })
             .doOnComplete(() -> log.info("Courses for student with id: {} successfully found ", id))
             .doOnError(error -> log.error("Failed to found courses for student with id: {}", id));
+    }
+
+    private Flux<CourseDTO> getCourseDTOFlux(List<Course> courseList, Map<Long, Teacher> teacherMap) {
+        return Flux.fromStream(courseList
+            .stream()
+            .map(course -> {
+                TeacherDTO teacherDTO = getTeacherDTO(course, teacherMap);
+                return new CourseDTO(course.getId(), course.getTitle(), teacherDTO);
+            }));
+    }
+
+    private Set<CourseDTO> getCourseDTOs(List<Course> courseList, Map<Long, Teacher> teacherMap) {
+        return courseList
+            .stream()
+            .map(course -> {
+                TeacherDTO teacherDTO = getTeacherDTO(course, teacherMap);
+                return new CourseDTO(course.getId(), course.getTitle(), teacherDTO);
+            })
+            .collect(Collectors.toSet());
+    }
+
+    private Mono<Student> getStudent(Long id) {
+        return studentRepository.findById(id).cache()
+            .switchIfEmpty(Mono.error(new NotFoundEntityException("Student with ID " + id + " not found")));
+    }
+
+    private Flux<Course> getCourseFlux(Long id) {
+        Flux<StudentCourse> studentCourses = studentCourseRepository.findAllByStudentId(id);
+        Mono<List<Long>> courseIds = getCourseIds(studentCourses);
+        return courseIds.flatMapMany(courseRepository::findAllByIdIn);
+    }
+
+    private static ResponseStudentDTO getResponseStudentDTO(Student student, Set<CourseDTO> courseDTOs) {
+        return new ResponseStudentDTO(
+            student.getId(),
+            student.getName(),
+            student.getEmail(),
+            courseDTOs
+        );
+    }
+
+    private Flux<Teacher> getTeacherFlux(Flux<Course> courses) {
+        Mono<List<Long>> teachersIds = getTeacherIds(courses);
+        return getTeachers(teachersIds);
+    }
+
+    private Flux<Course> getCourseFlux(Flux<StudentCourse> studentCourses) {
+        Mono<List<Long>> coursesIds = getCourseIds(studentCourses);
+        return coursesIds.flatMapMany(courseRepository::findAllByIdIn).cache();
+    }
+
+    private Flux<StudentCourse> getStudentCourseFlux(Flux<Student> students) {
+        Mono<List<Long>> studentsIds = students.map(Student::getId).collectList().cache();
+        return studentsIds.flatMapMany(studentCourseRepository::findAllByStudentIdIn).cache();
+    }
+
+    private Set<CourseDTO> getCourseDTOs(Student student, Map<Long, List<Long>> studentToCourses, Map<Long, Course> courseMap, Map<Long, Teacher> teacherMap) {
+        List<Long> studentCourseIds = studentToCourses
+            .getOrDefault(student.getId(), Collections.emptyList());
+
+        return studentCourseIds.stream()
+            .map(courseId -> {
+                Course course = courseMap.get(courseId);
+                TeacherDTO teacherDTO = getTeacherDTO(course, teacherMap);
+                return new CourseDTO(course.getId(), course.getTitle(), teacherDTO);
+            })
+            .collect(Collectors.toSet());
     }
 
     private Mono<Student> getStudentMono(Long id) {
@@ -274,8 +281,8 @@ public class StudentServiceImpl implements StudentService {
 
     private static Mono<List<Long>> getTeacherIds(Flux<Course> courses) {
         return courses
+            .filter(course -> course.getTeacherId() != null)
             .map(Course::getTeacherId)
-            .filter(Objects::nonNull)
             .collectList().cache();
     }
 
