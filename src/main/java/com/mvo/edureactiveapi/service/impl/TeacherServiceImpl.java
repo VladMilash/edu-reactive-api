@@ -103,7 +103,6 @@ public class TeacherServiceImpl implements TeacherService {
             .doOnError(error -> log.error("Failed to found teacher with id: {}", id));
     }
 
-
     @Transactional
     @Override
     public Mono<ResponseTeacherDTO> update(Long id, TeacherTransientDTO teacherTransientDTO) {
@@ -114,7 +113,7 @@ public class TeacherServiceImpl implements TeacherService {
                 teacher.setName(teacherTransientDTO.name());
                 return teacherRepository
                     .save(teacher)
-                    .flatMap(teacher1 -> getById(teacher1.getId()));
+                    .flatMap(updatedTeacher -> getById(updatedTeacher.getId()));
             })
             .doOnSuccess(updatedTeacher -> log.info("Teacher with id: {} successfully updated", id))
             .doOnError(error -> log.error("Failed to update teacher with id: {}", id));
