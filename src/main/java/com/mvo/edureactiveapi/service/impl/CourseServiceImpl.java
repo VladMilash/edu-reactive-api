@@ -19,6 +19,7 @@ import com.mvo.edureactiveapi.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -45,6 +46,7 @@ public class CourseServiceImpl implements CourseService {
             .doOnError(error -> log.error("Failed to saving course", error));
     }
 
+    @Transactional
     @Override
     public Flux<ResponseCoursesDTO> getAll() {
         log.info("Started found all courses");
@@ -76,6 +78,7 @@ public class CourseServiceImpl implements CourseService {
             .doOnError(error -> log.error("Failed to found all courses"));
     }
 
+    @Transactional
     @Override
     public Mono<ResponseCoursesDTO> getById(Long id) {
         log.info("Started get course with id: {}", id);
@@ -98,6 +101,7 @@ public class CourseServiceImpl implements CourseService {
             .doOnError(error -> log.error("Failed to found course with id: {}", id));
     }
 
+    @Transactional
     @Override
     public Mono<ResponseCoursesDTO> update(Long id, CourseTransientDTO courseTransientDTO) {
         log.info("Started update course with id: {}", id);

@@ -48,7 +48,8 @@ public class StudentServiceImpl implements StudentService {
             .flatMap(exist -> {
                 if (Boolean.TRUE.equals(exist)) {
                     log.error("The email {} was used for registration earlier", studentTransientDTO.email());
-                    return Mono.error(new AlReadyExistException("The email: " + studentTransientDTO.email() + " was used for registration earlier"));
+                    return Mono.error(new AlReadyExistException("The email: " + studentTransientDTO.email() +
+                        " was used for registration earlier"));
                 }
                 log.info("Email {} has not been used for registration before", studentTransientDTO.email());
                 log.info("Starting registration student with email {}", studentTransientDTO.email());
@@ -60,6 +61,7 @@ public class StudentServiceImpl implements StudentService {
             });
     }
 
+    @Transactional
     @Override
     public Flux<ResponseStudentDTO> getAll() {
         Flux<Student> students = studentRepository.findAll().cache();
@@ -89,6 +91,7 @@ public class StudentServiceImpl implements StudentService {
             .doOnError(error -> log.error("Failed to found all students"));
     }
 
+    @Transactional
     @Override
     public Mono<ResponseStudentDTO> getById(Long id) {
         Mono<Student> student = getStudent(id);
@@ -151,7 +154,8 @@ public class StudentServiceImpl implements StudentService {
                     .hasElement()
                     .flatMap(exist -> {
                         if (exist) {
-                            return Mono.error(new AlReadyExistException("Relation between student " + studentId + " and course " + courseId + " already exists"));
+                            return Mono.error(new AlReadyExistException("Relation between student " + studentId +
+                                " and course " + courseId + " already exists"));
                         } else {
                             return studentCourseRepository.save(studentCourse).then(getById(studentId));
                         }
@@ -161,6 +165,7 @@ public class StudentServiceImpl implements StudentService {
             .doOnError(error -> log.error("Failed to set relation between student {} and course {}", studentId, courseId, error));
     }
 
+    @Transactional
     @Override
     public Flux<CourseDTO> getStudentCourses(Long id) {
         Mono<Student> student = getStudentMono(id);
@@ -234,7 +239,8 @@ public class StudentServiceImpl implements StudentService {
         return studentsIds.flatMapMany(studentCourseRepository::findAllByStudentIdIn).cache();
     }
 
-    private Set<CourseDTO> getCourseDTOs(Student student, Map<Long, List<Long>> studentToCourses, Map<Long, Course> courseMap, Map<Long, Teacher> teacherMap) {
+    private Set<CourseDTO> getCourseDTOs(Student student, Map<Long, List<Long>> studentToCourses,
+                                         Map<Long, Course> courseMap, Map<Long, Teacher> teacherMap) {
         List<Long> studentCourseIds = studentToCourses
             .getOrDefault(student.getId(), Collections.emptyList());
 
