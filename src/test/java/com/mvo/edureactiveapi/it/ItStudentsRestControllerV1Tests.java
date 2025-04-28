@@ -4,7 +4,7 @@ import com.mvo.edureactiveapi.dto.requestdto.StudentTransientDTO;
 import com.mvo.edureactiveapi.entity.Course;
 import com.mvo.edureactiveapi.entity.Student;
 import com.mvo.edureactiveapi.entity.StudentCourse;
-import com.mvo.edureactiveapi.it.config.PostgreTestcontainerConfig;
+import com.mvo.edureactiveapi.config.PostgreTestcontainerConfig;
 import com.mvo.edureactiveapi.repository.CourseRepository;
 import com.mvo.edureactiveapi.repository.StudentCourseRepository;
 import com.mvo.edureactiveapi.repository.StudentRepository;

@@ -3,7 +3,7 @@ package com.mvo.edureactiveapi.it;
 import com.mvo.edureactiveapi.dto.requestdto.TeacherTransientDTO;
 import com.mvo.edureactiveapi.entity.Course;
 import com.mvo.edureactiveapi.entity.Teacher;
-import com.mvo.edureactiveapi.it.config.PostgreTestcontainerConfig;
+import com.mvo.edureactiveapi.config.PostgreTestcontainerConfig;
 import com.mvo.edureactiveapi.repository.CourseRepository;
 import com.mvo.edureactiveapi.repository.TeacherRepository;
 import org.junit.jupiter.api.BeforeEach;
