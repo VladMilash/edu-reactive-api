@@ -94,20 +94,20 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Override
     public Mono<ResponseStudentDTO> getById(Long id) {
-        Mono<Student> student = getStudent(id);
-        Flux<Course> courses = getCourseFlux(id);
-        Flux<Teacher> teachers = getTeacherFlux(courses);
-        return Mono.zip(
-            student,
-            courses.collectList(),
-            teachers.collectList()
-        ).map(tuple -> {
-            Student studentEntity = tuple.getT1();
-            List<Course> courseList = tuple.getT2();
-            List<Teacher> teacherList = tuple.getT3();
-            Map<Long, Teacher> teacherMap = getTeacherMap(teacherList);
-                Set<CourseDTO> courseDTOs = getCourseDTOs(courseList, teacherMap);
-                return getResponseStudentDTO(studentEntity, courseDTOs);
+        log.info("Started get student with id: {}", id);
+        return getStudent(id)
+            .flatMap(studentEntity -> {
+                Flux<Course> courses = getCourseFlux(id);
+                return courses.collectList()
+                    .flatMap(courseList -> {
+                        Flux<Teacher> teachers = getTeacherFlux(Flux.fromIterable(courseList));
+                        return teachers.collectList()
+                            .map(teacherList -> {
+                                Map<Long, Teacher> teacherMap = getTeacherMap(teacherList);
+                                Set<CourseDTO> courseDTOs = getCourseDTOs(courseList, teacherMap);
+                                return getResponseStudentDTO(studentEntity, courseDTOs);
+                            });
+                    });
             })
             .doOnSuccess(responseStudentDTO -> log.info("Student successfully found with id: {}", responseStudentDTO.id()))
             .doOnError(error -> log.error("Failed to found student with id: {}", id));
