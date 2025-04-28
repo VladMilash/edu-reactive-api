@@ -25,7 +25,10 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-webflux") {
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-reactor-netty")
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
+    }
 
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
@@ -48,6 +51,18 @@ dependencies {
 
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+
+    if (project.hasProperty("netty") || !project.hasProperty("tomcat") || !project.hasProperty("jetty")) {
+        implementation("org.springframework.boot:spring-boot-starter-reactor-netty:3.4.5")
+    }
+
+    if (project.hasProperty("tomcat"))  {
+        implementation("org.springframework.boot:spring-boot-starter-tomcat:3.4.4")
+    }
+
+    if (project.hasProperty("jetty")) {
+        implementation("org.springframework.boot:spring-boot-starter-jetty:3.4.4")
+    }
 }
 
 tasks.withType<Test> {

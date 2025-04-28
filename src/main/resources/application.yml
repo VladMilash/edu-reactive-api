@@ -5,6 +5,9 @@ spring:
   application:
     name: edu-block-api
 
+  profiles:
+    active: netty
+
   r2dbc:
     url: ${DATA_SOURCE_URL:r2dbc:postgresql://localhost:5432/edu2}
     username: ${DATA_SOURCE_USERNAME:postgres}
@@ -18,5 +21,35 @@ spring:
     user: ${DATA_SOURCE_USERNAME:postgres}
     password: ${DATA_SOURCE_PASSWORD:4}
     driver-class-name: org.postgresql.Driver
+---
+spring:
+  config:
+    activate:
+      on-profile: tomcat
+server:
+  port: 8081
+  tomcat:
+    threads:
+      max: 200
+---
+
+spring:
+  config:
+    activate:
+      on-profile: jetty
+server:
+  port: 8082
+  jetty:
+    threads:
+      max: 200
+---
+
+spring:
+  config:
+    activate:
+      on-profile: netty
+server:
+  port: 8083
+
 
 
