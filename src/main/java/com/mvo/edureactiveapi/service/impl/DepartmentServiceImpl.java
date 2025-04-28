@@ -133,7 +133,17 @@ public class DepartmentServiceImpl implements DepartmentService {
         return departmentRepository
             .save(department)
             .flatMap(department1 -> departmentRepository.findById(department1.getId()))
-            .map(departmentMapper::toResponseDepartmentDTO);
+            .map(department2 -> {
+                TeacherDTO headOfDepartment = new TeacherDTO(
+                    teacher.getId(),
+                    teacher.getName()
+                );
+                return new ResponseDepartmentDTO(
+                    department2.getId(),
+                    department2.getName(),
+                    headOfDepartment
+                );
+            });
     }
 
     private Mono<Teacher> getTeacherMono(Long teacherId) {
