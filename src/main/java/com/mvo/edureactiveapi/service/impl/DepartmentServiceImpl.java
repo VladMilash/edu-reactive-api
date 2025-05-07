@@ -6,23 +6,18 @@ import com.mvo.edureactiveapi.dto.responsedto.DeleteResponseDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseDepartmentDTO;
 import com.mvo.edureactiveapi.entity.Department;
 import com.mvo.edureactiveapi.entity.Teacher;
-import com.mvo.edureactiveapi.exeption.NotFoundEntityException;
 import com.mvo.edureactiveapi.mapper.DepartmentMapper;
 import com.mvo.edureactiveapi.repository.DepartmentRepository;
 import com.mvo.edureactiveapi.repository.TeacherRepository;
 import com.mvo.edureactiveapi.service.DepartmentService;
+import com.mvo.edureactiveapi.service.util.EntityFetcher;
+import com.mvo.edureactiveapi.service.util.ResponseDtoBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -49,19 +44,8 @@ public class DepartmentServiceImpl implements DepartmentService {
         log.info("Started get all departments");
         return departmentRepository.findAll()
             .flatMap(department -> {
-                Mono<TeacherDTO> teacherDTOMono = Mono.justOrEmpty(department.getHeadOfDepartment())
-                    .flatMap(teacherRepository::findById)
-                    .map(teacher -> new TeacherDTO(teacher.getId(), teacher.getName()))
-                    .defaultIfEmpty(new TeacherDTO(null, null))
-                    .log();
-
-                return teacherDTOMono.map(teacherDTO -> {
-                    return new ResponseDepartmentDTO(
-                        department.getId(),
-                        department.getName(),
-                        department.getHeadOfDepartment() != null ? teacherDTO : null
-                    );
-                });
+                Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(department, teacherRepository);
+                return ResponseDtoBuilder.getResponseDepartmentDTOMono(department, teacherDTOMono);
             })
             .log()
             .doOnComplete(() -> log.info("Successfully retrieved all departments"))
@@ -73,20 +57,10 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public Mono<ResponseDepartmentDTO> getById(Long id) {
         log.info("Started get department with id: {}", id);
-        Mono<Department> departmentMono = getDepartmentMono(id);
+        Mono<Department> departmentMono = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentMono.flatMap(department -> {
-                Mono<TeacherDTO> teacherDTOMono = Mono.justOrEmpty(department.getHeadOfDepartment())
-                    .flatMap(teacherRepository::findById)
-                    .map(teacher -> new TeacherDTO(teacher.getId(), teacher.getName()))
-                    .defaultIfEmpty(new TeacherDTO(null, null))
-                    .log();
-                return teacherDTOMono.map(teacherDTO -> {
-                    return new ResponseDepartmentDTO(
-                        department.getId(),
-                        department.getName(),
-                        department.getHeadOfDepartment() != null ? teacherDTO : null
-                    );
-                });
+                Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(department, teacherRepository);
+                return ResponseDtoBuilder.getResponseDepartmentDTOMono(department, teacherDTOMono);
             })
             .log()
             .doOnSuccess(dto -> log.info("Department successfully found with id: {}", id))
@@ -96,7 +70,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public Mono<DeleteResponseDTO> delete(Long id) {
         log.info("Started delete department with id: {}", id);
-        Mono<Department> departmentForDelete = getDepartmentMono(id);
+        Mono<Department> departmentForDelete = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentForDelete
             .flatMap(departmentRepository::delete)
             .doOnSuccess(studentDeleted -> log.info("Department with id: {} successfully deleted", id))
@@ -109,7 +83,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public Mono<ResponseDepartmentDTO> update(Long id, DepartmentTransientDTO departmentTransientDTO) {
         log.info("Started update department with id: {}", id);
-        Mono<Department> departmentForUpdate = getDepartmentMono(id);
+        Mono<Department> departmentForUpdate = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentForUpdate
             .flatMap(department -> {
                 department.setName(departmentTransientDTO.name());
@@ -126,8 +100,8 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public Mono<ResponseDepartmentDTO> setRelationWithTeacher(Long departmentId, Long teacherId) {
         log.info("Setting relations for department-teacher, with department id: {}, and teacher id: {}", departmentId, teacherId);
-        Mono<Department> departmentMono = getDepartmentMono(departmentId);
-        Mono<Teacher> teacherMono = getTeacherMono(teacherId);
+        Mono<Department> departmentMono = EntityFetcher.getDepartmentMono(departmentId, departmentRepository);
+        Mono<Teacher> teacherMono = EntityFetcher.getTeacherMono(teacherId, teacherRepository);
         return Mono.zip(
                 departmentMono,
                 teacherMono
@@ -158,16 +132,6 @@ public class DepartmentServiceImpl implements DepartmentService {
                 );
             })
             .log();
-    }
-
-    private Mono<Teacher> getTeacherMono(Long teacherId) {
-        return teacherRepository.findById(teacherId)
-            .switchIfEmpty(Mono.error(new NotFoundEntityException("Teacher with ID " + teacherId + " not found")));
-    }
-
-    private Mono<Department> getDepartmentMono(Long id) {
-        return departmentRepository.findById(id)
-            .switchIfEmpty(Mono.error(new NotFoundEntityException("Department with ID " + id + " not found")));
     }
 
 }
