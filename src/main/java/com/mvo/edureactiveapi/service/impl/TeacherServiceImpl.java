@@ -39,7 +39,6 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     public Mono<ResponseTeacherDTO> save(TeacherTransientDTO teacherTransientDTO) {
-        log.info("Started creating teacher with name: {}", teacherTransientDTO.name());
         return teacherRepository
             .save(teacherMapper.fromTeacherTransientDTO(teacherTransientDTO))
             .map(teacherMapper::toResponseTeacherDTO)
@@ -50,7 +49,6 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     @Override
     public Flux<ResponseTeacherDTO> getAll() {
-        log.info("Started get all teachers");
         return teacherRepository.findAll()
             .flatMap(getTeacherMonoFunction())
             .log()
@@ -61,7 +59,6 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     @Override
     public Mono<ResponseTeacherDTO> getById(Long id) {
-        log.info("Started get teacher with id: {}", id);
         Mono<Teacher> teacherMono = EntityFetcher.getTeacherMono(id, teacherRepository);
         return teacherMono.flatMap(getTeacherMonoFunction())
             .log()
@@ -72,7 +69,6 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     @Override
     public Mono<ResponseTeacherDTO> update(Long id, TeacherTransientDTO teacherTransientDTO) {
-        log.info("Started update teacher with id: {}", id);
         Mono<Teacher> teacherForUpdate = EntityFetcher.getTeacherMono(id, teacherRepository);
         return teacherForUpdate
             .flatMap(teacher -> {
@@ -88,7 +84,6 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     public Mono<DeleteResponseDTO> delete(Long id) {
-        log.info("Started delete teacher with id: {}", id);
         Mono<Teacher> teacherForDelete = EntityFetcher.getTeacherMono(id, teacherRepository);
         return teacherForDelete
             .flatMap(teacherRepository::delete)
@@ -101,7 +96,6 @@ public class TeacherServiceImpl implements TeacherService {
     @Transactional
     @Override
     public Mono<ResponseCoursesDTO> setRelationTeacherWithCourse(Long teacherId, Long courseId) {
-        log.info("Setting relations for teacher-course, with teacher id: {}, and course id: {}", teacherId, courseId);
         Mono<Teacher> teacherMono = EntityFetcher.getTeacherMono(teacherId, teacherRepository);
         Mono<Course> courseMono = EntityFetcher.getCourseMono(courseId, courseRepository);
         return Mono.zip(

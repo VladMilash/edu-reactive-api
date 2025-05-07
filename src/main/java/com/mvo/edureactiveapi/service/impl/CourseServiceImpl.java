@@ -36,7 +36,6 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Mono<ResponseCoursesDTO> save(CourseTransientDTO courseTransientDTO) {
-        log.info("Started creating course with title: {}", courseTransientDTO.title());
         return courseRepository
             .save(courseMapper.fromCourseTransientDTO(courseTransientDTO))
             .map(courseMapper::toResponseCoursesDTO)
@@ -47,7 +46,6 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     @Override
     public Flux<ResponseCoursesDTO> getAll() {
-        log.info("Starting gel all courses");
         return courseRepository.findAll()
             .flatMap(course -> {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(course, teacherRepository);
@@ -71,7 +69,6 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     @Override
     public Mono<ResponseCoursesDTO> getById(Long id) {
-        log.info("Started get course with id: {}", id);
         Mono<Course> courseMono = EntityFetcher.getCourseMono(id, courseRepository);
         return courseMono.flatMap(course -> {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(course, teacherRepository);
@@ -96,7 +93,6 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     @Override
     public Mono<ResponseCoursesDTO> update(Long id, CourseTransientDTO courseTransientDTO) {
-        log.info("Started update course with id: {}", id);
         Mono<Course> courseForDelete = EntityFetcher.getCourseMono(id, courseRepository);
         return courseForDelete
             .flatMap(foundedCourse -> {
@@ -110,7 +106,6 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Mono<DeleteResponseDTO> delete(Long id) {
-        log.info("Started delete course with id: {}", id);
         Mono<Course> courseForDelete = EntityFetcher.getCourseMono(id, courseRepository);
         return courseForDelete
             .flatMap(courseRepository::delete)

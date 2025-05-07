@@ -29,7 +29,6 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public Mono<ResponseDepartmentDTO> save(DepartmentTransientDTO departmentTransientDTO) {
-        log.info("Started creating department with name: {}", departmentTransientDTO.name());
         return departmentRepository
             .save(departmentMapper.fromDepartmentTransientDTO(departmentTransientDTO))
             .map(departmentMapper::toResponseDepartmentDTO)
@@ -41,7 +40,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     @Override
     public Flux<ResponseDepartmentDTO> getAll() {
-        log.info("Started get all departments");
         return departmentRepository.findAll()
             .flatMap(department -> {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(department, teacherRepository);
@@ -56,7 +54,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     @Override
     public Mono<ResponseDepartmentDTO> getById(Long id) {
-        log.info("Started get department with id: {}", id);
         Mono<Department> departmentMono = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentMono.flatMap(department -> {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(department, teacherRepository);
@@ -69,7 +66,6 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public Mono<DeleteResponseDTO> delete(Long id) {
-        log.info("Started delete department with id: {}", id);
         Mono<Department> departmentForDelete = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentForDelete
             .flatMap(departmentRepository::delete)
@@ -82,7 +78,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     @Override
     public Mono<ResponseDepartmentDTO> update(Long id, DepartmentTransientDTO departmentTransientDTO) {
-        log.info("Started update department with id: {}", id);
         Mono<Department> departmentForUpdate = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentForUpdate
             .flatMap(department -> {
@@ -99,7 +94,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     @Override
     public Mono<ResponseDepartmentDTO> setRelationWithTeacher(Long departmentId, Long teacherId) {
-        log.info("Setting relations for department-teacher, with department id: {}, and teacher id: {}", departmentId, teacherId);
         Mono<Department> departmentMono = EntityFetcher.getDepartmentMono(departmentId, departmentRepository);
         Mono<Teacher> teacherMono = EntityFetcher.getTeacherMono(teacherId, teacherRepository);
         return Mono.zip(

@@ -58,7 +58,6 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Override
     public Flux<ResponseStudentDTO> getAll() {
-        log.info("Starting get all students");
         return studentRepository.findAll()
             .flatMap(student -> {
                 Flux<CourseDTO> courseDTOFlux = EntityFetcher.getCourseDTOFlux(student, studentCourseRepository, courseRepository, teacherRepository);
@@ -72,7 +71,6 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Override
     public Mono<ResponseStudentDTO> getById(Long id) {
-        log.info("Starting get student with id: {}", id);
         Mono<Student> studentMono = EntityFetcher.getStudentMono(id, studentRepository);
         return studentMono.flatMap(student -> {
                 Flux<CourseDTO> courseDTOFlux = EntityFetcher.getCourseDTOFlux(student, studentCourseRepository, courseRepository, teacherRepository);
@@ -85,7 +83,6 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Override
     public Mono<ResponseStudentDTO> update(Long id, StudentTransientDTO studentTransientDTO) {
-        log.info("Started update student with id: {}", id);
         Mono<Student> studentForUpdate = EntityFetcher.getStudentMono(id, studentRepository);
         return studentForUpdate
             .flatMap(foundedStudent -> {
@@ -100,7 +97,6 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Mono<DeleteResponseDTO> delete(Long id) {
-        log.info("Started delete student with id: {}", id);
         Mono<Student> studentForDelete = EntityFetcher.getStudentMono(id, studentRepository);
         return studentForDelete
             .flatMap(studentRepository::delete)
