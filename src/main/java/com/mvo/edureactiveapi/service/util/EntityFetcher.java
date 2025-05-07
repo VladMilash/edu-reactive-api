@@ -103,7 +103,7 @@ public final class EntityFetcher {
                 .map(teacherDTO -> new CourseDTO(
                     course.getId(),
                     course.getTitle(),
-                    teacherDTO
+                    teacherDTO.id() != null ? teacherDTO : null
                 )));
     }
 
