@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import java.util.*;
 
 
-@Mapper(componentModel = "spring")
+@Mapper(config = MapperConfig.class)
 public interface StudentMapper {
     Student map(StudentTransientDTO studentTransientDTO);
 

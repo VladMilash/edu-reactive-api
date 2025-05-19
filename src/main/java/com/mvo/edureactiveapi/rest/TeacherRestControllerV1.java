@@ -6,9 +6,13 @@ import com.mvo.edureactiveapi.dto.responsedto.ResponseCoursesDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseTeacherDTO;
 import com.mvo.edureactiveapi.service.TeacherService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,8 +21,18 @@ public class TeacherRestControllerV1 {
     private final TeacherService service;
 
     @PostMapping
-    Mono<ResponseTeacherDTO> save(@RequestBody TeacherTransientDTO teacherTransientDTO) {
-        return service.save(teacherTransientDTO);
+    Mono<ResponseEntity<ResponseTeacherDTO>> save(@RequestBody TeacherTransientDTO teacherTransientDTO,
+                                                  UriComponentsBuilder uriBuilder) {
+        return service.save(teacherTransientDTO)
+            .map(saved -> {
+                URI location = uriBuilder
+                    .path("api/v1/teachers/{id}")
+                    .buildAndExpand(saved.id())
+                    .toUri();
+                return ResponseEntity
+                    .created(location)
+                    .body(saved);
+            });
     }
 
     @GetMapping

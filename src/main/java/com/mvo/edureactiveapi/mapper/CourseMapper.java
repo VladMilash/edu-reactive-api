@@ -9,7 +9,7 @@ import org.mapstruct.Mapper;
 
 import java.util.HashSet;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = MapperConfig.class)
 public interface CourseMapper {
     CourseDTO map(Course course);
 

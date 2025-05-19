@@ -7,7 +7,7 @@ import com.mvo.edureactiveapi.entity.Department;
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = MapperConfig.class)
 public interface DepartmentMapper {
 
     default ResponseDepartmentDTO toResponseDepartmentDTO(Department department) {

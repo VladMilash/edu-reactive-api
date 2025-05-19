@@ -5,9 +5,13 @@ import com.mvo.edureactiveapi.dto.responsedto.DeleteResponseDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseDepartmentDTO;
 import com.mvo.edureactiveapi.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,8 +20,18 @@ public class DepartmentRestControllerV1 {
     private final DepartmentService service;
 
     @PostMapping
-    public Mono<ResponseDepartmentDTO> saveDepartment(@RequestBody DepartmentTransientDTO departmentTransientDTO) {
-        return service.save(departmentTransientDTO);
+    public Mono<ResponseEntity<ResponseDepartmentDTO>> saveDepartment(@RequestBody DepartmentTransientDTO departmentTransientDTO,
+                                                                      UriComponentsBuilder uriBuilder) {
+        return service.save(departmentTransientDTO)
+            .map(saved -> {
+                URI location = uriBuilder
+                    .path("api/v1/departments/{id}")
+                    .buildAndExpand(saved.id())
+                    .toUri();
+                return ResponseEntity
+                    .created(location)
+                    .body(saved);
+            });
     }
 
     @GetMapping
