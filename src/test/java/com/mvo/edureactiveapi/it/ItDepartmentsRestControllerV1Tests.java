@@ -55,7 +55,7 @@ public class ItDepartmentsRestControllerV1Tests {
             .exchange();
 
         // then
-        result.expectStatus().isOk()
+        result.expectStatus().isCreated()
             .expectBody()
             .jsonPath("$.id").exists()
             .jsonPath("$.name").isEqualTo("test")

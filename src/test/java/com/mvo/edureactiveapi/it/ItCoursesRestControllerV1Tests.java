@@ -49,7 +49,7 @@ public class ItCoursesRestControllerV1Tests {
             .exchange();
 
         // then
-        result.expectStatus().isOk()
+        result.expectStatus().isCreated()
             .expectBody()
             .jsonPath("$.id").exists()
             .jsonPath("$.title").isEqualTo("test")

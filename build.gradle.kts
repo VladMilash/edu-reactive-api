@@ -54,6 +54,8 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-validation:3.4.5")
 
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.8")
+
     if (project.hasProperty("netty") || !project.hasProperty("tomcat") || !project.hasProperty("jetty")) {
         implementation("org.springframework.boot:spring-boot-starter-reactor-netty:3.4.5")
     }

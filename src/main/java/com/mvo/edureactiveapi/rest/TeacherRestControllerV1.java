@@ -5,6 +5,7 @@ import com.mvo.edureactiveapi.dto.responsedto.DeleteResponseDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseCoursesDTO;
 import com.mvo.edureactiveapi.dto.responsedto.ResponseTeacherDTO;
 import com.mvo.edureactiveapi.service.TeacherService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,10 @@ import java.net.URI;
 public class TeacherRestControllerV1 {
     private final TeacherService service;
 
+    @Operation(
+        summary = "Создание учителя",
+        description = "Позволяет создать нового учителя"
+    )
     @PostMapping
     Mono<ResponseEntity<ResponseTeacherDTO>> save(@Validated  @RequestBody TeacherTransientDTO teacherTransientDTO,
                                                   UriComponentsBuilder uriBuilder) {
@@ -36,27 +41,47 @@ public class TeacherRestControllerV1 {
             });
     }
 
+    @Operation(
+        summary = "Получение всех учителей",
+        description = "Позволяет получить всех учителей"
+    )
     @GetMapping
     Flux<ResponseTeacherDTO> getAll(@RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "10") int size) {
         return service.getAll(page, size);
     }
 
+    @Operation(
+        summary = "Получение учителя по id",
+        description = "Позволяет получить учителя по id"
+    )
     @GetMapping("{id}")
     Mono<ResponseTeacherDTO> getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
+    @Operation(
+        summary = "Обновление учителя по id",
+        description = "Позволяет обновить учителя по id"
+    )
     @PutMapping("{id}")
     Mono<ResponseTeacherDTO> update(@PathVariable Long id, @Validated @RequestBody TeacherTransientDTO teacherTransientDTO) {
         return service.update(id, teacherTransientDTO);
     }
 
+    @Operation(
+        summary = "Удаление учителя по id",
+        description = "Позволяет удалить учителя по id"
+    )
     @DeleteMapping("{id}")
     Mono<DeleteResponseDTO> delete(@PathVariable Long id) {
         return service.delete(id);
     }
 
+    @Operation(
+        summary = "Установление связи учитель-курс",
+        description = "Позволяет установить связь учитель-курс"
+    )
     @PostMapping("/{teacherId}/courses/{coursesId}")
     public Mono<ResponseCoursesDTO> setRelationTeacherWithCourse(@PathVariable Long teacherId, @PathVariable Long coursesId) {
         return service.setRelationTeacherWithCourse(teacherId, coursesId);
