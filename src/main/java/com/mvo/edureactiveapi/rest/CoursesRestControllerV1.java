@@ -6,6 +6,7 @@ import com.mvo.edureactiveapi.dto.responsedto.ResponseCoursesDTO;
 import com.mvo.edureactiveapi.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -20,7 +21,7 @@ public class CoursesRestControllerV1 {
     private final CourseService service;
 
     @PostMapping
-    Mono<ResponseEntity<ResponseCoursesDTO>> save(@RequestBody CourseTransientDTO courseTransientDTO,
+    Mono<ResponseEntity<ResponseCoursesDTO>> save(@Validated @RequestBody CourseTransientDTO courseTransientDTO,
                                                   UriComponentsBuilder uriBuilder) {
         return service.save(courseTransientDTO)
             .map(saved -> {
@@ -46,7 +47,7 @@ public class CoursesRestControllerV1 {
     }
 
     @PutMapping("{id}")
-    Mono<ResponseCoursesDTO> update(@PathVariable Long id, @RequestBody CourseTransientDTO courseTransientDTO) {
+    Mono<ResponseCoursesDTO> update(@PathVariable Long id, @Validated @RequestBody CourseTransientDTO courseTransientDTO) {
         return service.update(id, courseTransientDTO);
     }
 

@@ -7,6 +7,7 @@ import com.mvo.edureactiveapi.dto.responsedto.ResponseTeacherDTO;
 import com.mvo.edureactiveapi.service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -21,7 +22,7 @@ public class TeacherRestControllerV1 {
     private final TeacherService service;
 
     @PostMapping
-    Mono<ResponseEntity<ResponseTeacherDTO>> save(@RequestBody TeacherTransientDTO teacherTransientDTO,
+    Mono<ResponseEntity<ResponseTeacherDTO>> save(@Validated  @RequestBody TeacherTransientDTO teacherTransientDTO,
                                                   UriComponentsBuilder uriBuilder) {
         return service.save(teacherTransientDTO)
             .map(saved -> {
@@ -47,7 +48,7 @@ public class TeacherRestControllerV1 {
     }
 
     @PutMapping("{id}")
-    Mono<ResponseTeacherDTO> update(@PathVariable Long id, @RequestBody TeacherTransientDTO teacherTransientDTO) {
+    Mono<ResponseTeacherDTO> update(@PathVariable Long id, @Validated @RequestBody TeacherTransientDTO teacherTransientDTO) {
         return service.update(id, teacherTransientDTO);
     }
 

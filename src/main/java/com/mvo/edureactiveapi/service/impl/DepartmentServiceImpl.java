@@ -12,6 +12,7 @@ import com.mvo.edureactiveapi.repository.TeacherRepository;
 import com.mvo.edureactiveapi.service.DepartmentService;
 import com.mvo.edureactiveapi.service.util.EntityFetcher;
 import com.mvo.edureactiveapi.service.util.ResponseDtoBuilder;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     private final DepartmentMapper departmentMapper;
 
     @Override
-    public Mono<ResponseDepartmentDTO> save(DepartmentTransientDTO departmentTransientDTO) {
+    public Mono<ResponseDepartmentDTO> save(@Valid DepartmentTransientDTO departmentTransientDTO) {
         return departmentRepository
             .save(departmentMapper.fromDepartmentTransientDTO(departmentTransientDTO))
             .map(departmentMapper::toResponseDepartmentDTO)
@@ -73,7 +74,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Transactional
     @Override
-    public Mono<ResponseDepartmentDTO> update(Long id, DepartmentTransientDTO departmentTransientDTO) {
+    public Mono<ResponseDepartmentDTO> update(Long id, @Valid DepartmentTransientDTO departmentTransientDTO) {
         Mono<Department> departmentForUpdate = EntityFetcher.getDepartmentMono(id, departmentRepository);
         return departmentForUpdate
             .flatMap(department -> {

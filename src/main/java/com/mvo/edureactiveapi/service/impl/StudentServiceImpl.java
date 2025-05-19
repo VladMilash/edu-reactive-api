@@ -16,6 +16,7 @@ import com.mvo.edureactiveapi.repository.TeacherRepository;
 import com.mvo.edureactiveapi.service.StudentService;
 import com.mvo.edureactiveapi.service.util.EntityFetcher;
 import com.mvo.edureactiveapi.service.util.ResponseDtoBuilder;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Transactional
     @Override
-    public Mono<ResponseStudentDTO> save(StudentTransientDTO studentTransientDTO) {
+    public Mono<ResponseStudentDTO> save(@Valid StudentTransientDTO studentTransientDTO) {
         log.info("Check if the email {} has been used for registration before", studentTransientDTO.email());
         return studentRepository.existsByEmail(studentTransientDTO.email())
             .flatMap(exist -> {
@@ -81,7 +82,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Transactional
     @Override
-    public Mono<ResponseStudentDTO> update(Long id, StudentTransientDTO studentTransientDTO) {
+    public Mono<ResponseStudentDTO> update(Long id, @Valid StudentTransientDTO studentTransientDTO) {
         Mono<Student> studentForUpdate = EntityFetcher.getStudentMono(id, studentRepository);
         return studentForUpdate
             .flatMap(foundedStudent -> {

@@ -6,6 +6,7 @@ import com.mvo.edureactiveapi.dto.responsedto.ResponseDepartmentDTO;
 import com.mvo.edureactiveapi.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -20,7 +21,7 @@ public class DepartmentRestControllerV1 {
     private final DepartmentService service;
 
     @PostMapping
-    public Mono<ResponseEntity<ResponseDepartmentDTO>> saveDepartment(@RequestBody DepartmentTransientDTO departmentTransientDTO,
+    public Mono<ResponseEntity<ResponseDepartmentDTO>> saveDepartment(@Validated  @RequestBody DepartmentTransientDTO departmentTransientDTO,
                                                                       UriComponentsBuilder uriBuilder) {
         return service.save(departmentTransientDTO)
             .map(saved -> {
@@ -46,7 +47,7 @@ public class DepartmentRestControllerV1 {
     }
 
     @PutMapping("{id}")
-    public Mono<ResponseDepartmentDTO> update(@PathVariable Long id, @RequestBody DepartmentTransientDTO departmentTransientDTO) {
+    public Mono<ResponseDepartmentDTO> update(@PathVariable Long id, @Validated @RequestBody DepartmentTransientDTO departmentTransientDTO) {
         return service.update(id, departmentTransientDTO);
     }
 

@@ -14,6 +14,7 @@ import com.mvo.edureactiveapi.repository.TeacherRepository;
 import com.mvo.edureactiveapi.service.CourseService;
 import com.mvo.edureactiveapi.service.util.EntityFetcher;
 import com.mvo.edureactiveapi.service.util.ResponseDtoBuilder;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
 
     @Override
-    public Mono<ResponseCoursesDTO> save(CourseTransientDTO courseTransientDTO) {
+    public Mono<ResponseCoursesDTO> save(@Valid CourseTransientDTO courseTransientDTO) {
         return courseRepository
             .save(courseMapper.fromCourseTransientDTO(courseTransientDTO))
             .map(courseMapper::toResponseCoursesDTO)
@@ -90,7 +91,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Transactional
     @Override
-    public Mono<ResponseCoursesDTO> update(Long id, CourseTransientDTO courseTransientDTO) {
+    public Mono<ResponseCoursesDTO> update(Long id, @Valid CourseTransientDTO courseTransientDTO) {
         Mono<Course> courseForDelete = EntityFetcher.getCourseMono(id, courseRepository);
         return courseForDelete
             .flatMap(foundedCourse -> {

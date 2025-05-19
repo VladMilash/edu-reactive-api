@@ -16,6 +16,7 @@ import com.mvo.edureactiveapi.service.CourseService;
 import com.mvo.edureactiveapi.service.TeacherService;
 import com.mvo.edureactiveapi.service.util.EntityFetcher;
 import com.mvo.edureactiveapi.service.util.ResponseDtoBuilder;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class TeacherServiceImpl implements TeacherService {
     private final CourseService courseService;
 
     @Override
-    public Mono<ResponseTeacherDTO> save(TeacherTransientDTO teacherTransientDTO) {
+    public Mono<ResponseTeacherDTO> save(@Valid TeacherTransientDTO teacherTransientDTO) {
         return teacherRepository
             .save(teacherMapper.fromTeacherTransientDTO(teacherTransientDTO))
             .map(teacherMapper::toResponseTeacherDTO)
@@ -67,7 +68,7 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Transactional
     @Override
-    public Mono<ResponseTeacherDTO> update(Long id, TeacherTransientDTO teacherTransientDTO) {
+    public Mono<ResponseTeacherDTO> update(Long id, @Valid TeacherTransientDTO teacherTransientDTO) {
         Mono<Teacher> teacherForUpdate = EntityFetcher.getTeacherMono(id, teacherRepository);
         return teacherForUpdate
             .flatMap(teacher -> {
@@ -124,7 +125,6 @@ public class TeacherServiceImpl implements TeacherService {
                 .map(tuple -> {
                     Set<CourseShortDTO> courseShortDTOs = tuple.getT1();
                     DepartmentShortDTO departmentShortDTO = tuple.getT2();
-
                     return ResponseDtoBuilder.getResponseTeacherDTO(teacher, courseShortDTOs, departmentShortDTO);
                 });
         };
