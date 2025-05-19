@@ -45,8 +45,9 @@ public class CourseServiceImpl implements CourseService {
 
     @Transactional
     @Override
-    public Flux<ResponseCoursesDTO> getAll() {
-        return courseRepository.findAll()
+    public Flux<ResponseCoursesDTO> getAll(int page, int size) {
+        long offset = (long) page * size;
+        return courseRepository.findAllWithPagination(size, offset)
             .flatMap(course -> {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(course, teacherRepository);
                 Flux<StudentDTO> studentDTOFlux = EntityFetcher.getStudentDTOFlux(course, studentCourseRepository,studentRepository);
@@ -57,13 +58,11 @@ public class CourseServiceImpl implements CourseService {
                     .map(tuple -> {
                         Set<StudentDTO> studentDTOs = tuple.getT1();
                         TeacherDTO teacherDTO = tuple.getT2();
-
                         return ResponseDtoBuilder.getResponseCoursesDTO(course, teacherDTO, studentDTOs);
                     });
             })
             .doOnComplete(() -> log.info("Successfully retrieved all courses"))
-            .doOnError(error -> log.error("Failed to find all courses: {}", error.getMessage()))
-            .log();
+            .doOnError(error -> log.error("Failed to find all courses: {}", error.getMessage()));
     }
 
     @Transactional
@@ -86,8 +85,7 @@ public class CourseServiceImpl implements CourseService {
 
             })
             .doOnSuccess(responseCoursesDTO -> log.info("Successfully found course with id: {}", id))
-            .doOnError(error -> log.error("Failed to found course with id: {}", id, error))
-            .log();
+            .doOnError(error -> log.error("Failed to found course with id: {}", id, error));
     }
 
     @Transactional
@@ -100,8 +98,7 @@ public class CourseServiceImpl implements CourseService {
                 return courseRepository.save(foundedCourse).then(getById(id));
             })
             .doOnSuccess(updatedStudent -> log.info("Course with id: {} successfully updated", id))
-            .doOnError(error -> log.error("Failed to update course with id: {}", id, error))
-            .log();
+            .doOnError(error -> log.error("Failed to update course with id: {}", id, error));
     }
 
     @Override
@@ -111,8 +108,7 @@ public class CourseServiceImpl implements CourseService {
             .flatMap(courseRepository::delete)
             .doOnSuccess(studentDeleted -> log.info("Course with id: {} successfully deleted", id))
             .doOnError(error -> log.error("Failed to delete course", error))
-            .then(Mono.just(new DeleteResponseDTO("Course deleted successfully")))
-            .log();
+            .then(Mono.just(new DeleteResponseDTO("Course deleted successfully")));
     }
 
 }

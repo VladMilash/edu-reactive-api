@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 public interface TeacherService {
     Mono<ResponseTeacherDTO> save(TeacherTransientDTO teacherTransientDTO);
     Mono<ResponseTeacherDTO> getById(Long id);
-    Flux<ResponseTeacherDTO> getAll();
+    Flux<ResponseTeacherDTO> getAll(int page, int size);
     Mono<ResponseTeacherDTO> update(Long id, TeacherTransientDTO teacherTransientDTO);
     Mono<DeleteResponseDTO> delete(Long id);
     Mono<ResponseCoursesDTO> setRelationTeacherWithCourse(Long teacherId, Long courseId);

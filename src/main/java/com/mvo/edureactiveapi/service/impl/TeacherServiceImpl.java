@@ -48,10 +48,10 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Transactional
     @Override
-    public Flux<ResponseTeacherDTO> getAll() {
-        return teacherRepository.findAll()
+    public Flux<ResponseTeacherDTO> getAll(int page, int size) {
+        long offset = (long) page * size;
+        return teacherRepository.findAllWithPagination(size, offset)
             .flatMap(getTeacherMonoFunction())
-            .log()
             .doOnComplete(() -> log.info("Successfully retrieved all teachers"))
             .doOnError(error -> log.error("Failed to found all teachers", error));
     }
@@ -61,7 +61,6 @@ public class TeacherServiceImpl implements TeacherService {
     public Mono<ResponseTeacherDTO> getById(Long id) {
         Mono<Teacher> teacherMono = EntityFetcher.getTeacherMono(id, teacherRepository);
         return teacherMono.flatMap(getTeacherMonoFunction())
-            .log()
             .doOnSuccess(responseTeacherDTO -> log.info("Teacher successfully found with id: {}", id))
             .doOnError(error -> log.error("Failed to found teacher with id: {}", id, error));
     }
@@ -77,7 +76,6 @@ public class TeacherServiceImpl implements TeacherService {
                     .save(teacher)
                     .flatMap(updatedTeacher -> getById(updatedTeacher.getId()));
             })
-            .log()
             .doOnSuccess(updatedTeacher -> log.info("Teacher with id: {} successfully updated", id))
             .doOnError(error -> log.error("Failed to update teacher with id: {}", id, error));
     }
@@ -87,7 +85,6 @@ public class TeacherServiceImpl implements TeacherService {
         Mono<Teacher> teacherForDelete = EntityFetcher.getTeacherMono(id, teacherRepository);
         return teacherForDelete
             .flatMap(teacherRepository::delete)
-            .log()
             .doOnSuccess(studentDeleted -> log.info("Teacher with id: {} successfully deleted", id))
             .doOnError(error -> log.error("Failed to delete teacher", error))
             .then(Mono.just(new DeleteResponseDTO("Teacher deleted successfully")));
@@ -106,7 +103,6 @@ public class TeacherServiceImpl implements TeacherService {
                 Course course = tuple.getT2();
                 return saveRelationTeacherWithCourse(course, teacher);
             })
-            .log()
             .doOnSuccess(studentDeleted -> log.info("Successfully added teacher with id: {} to course with id: {}", teacherId, courseId))
             .doOnError(error -> log.error("Failed to added teacher with id: {} to course with id: {}", teacherId, courseId, error));
     }

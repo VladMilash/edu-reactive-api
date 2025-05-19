@@ -21,8 +21,9 @@ public class DepartmentRestControllerV1 {
     }
 
     @GetMapping
-    public Flux<ResponseDepartmentDTO> getAll() {
-        return service.getAll();
+    public Flux<ResponseDepartmentDTO> getAll(@RequestParam(defaultValue = "0") int page,
+                                              @RequestParam(defaultValue = "10") int size) {
+        return service.getAll(page, size);
     }
 
     @GetMapping("{id}")

@@ -22,8 +22,9 @@ public class TeacherRestControllerV1 {
     }
 
     @GetMapping
-    Flux<ResponseTeacherDTO> getAll() {
-        return service.getAll();
+    Flux<ResponseTeacherDTO> getAll(@RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int size) {
+        return service.getAll(page, size);
     }
 
     @GetMapping("{id}")

@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 public interface DepartmentService {
     Mono<ResponseDepartmentDTO> save(DepartmentTransientDTO departmentTransientDTO);
     Mono<ResponseDepartmentDTO> getById(Long id);
-    Flux<ResponseDepartmentDTO> getAll();
+    Flux<ResponseDepartmentDTO> getAll(int page, int size);
     Mono<DeleteResponseDTO> delete(Long id);
     Mono<ResponseDepartmentDTO> update(Long id, DepartmentTransientDTO departmentTransientDTO);
     Mono<ResponseDepartmentDTO> setRelationWithTeacher(Long departmentId, Long teacherId);

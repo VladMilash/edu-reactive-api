@@ -32,23 +32,21 @@ public class DepartmentServiceImpl implements DepartmentService {
         return departmentRepository
             .save(departmentMapper.fromDepartmentTransientDTO(departmentTransientDTO))
             .map(departmentMapper::toResponseDepartmentDTO)
-            .log()
             .doOnSuccess(dto -> log.info("Department successfully created with id: {}", dto.id()))
             .doOnError(error -> log.error("Failed to saving department", error));
     }
 
     @Transactional
     @Override
-    public Flux<ResponseDepartmentDTO> getAll() {
-        return departmentRepository.findAll()
+    public Flux<ResponseDepartmentDTO> getAll(int page, int size) {
+        long offset = (long) page * size;
+        return departmentRepository.findAllWithPagination(size, offset)
             .flatMap(department -> {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(department, teacherRepository);
                 return ResponseDtoBuilder.getResponseDepartmentDTOMono(department, teacherDTOMono);
             })
-            .log()
             .doOnComplete(() -> log.info("Successfully retrieved all departments"))
             .doOnError(error -> log.error("Failed to found all departments", error));
-
     }
 
     @Transactional
@@ -59,7 +57,6 @@ public class DepartmentServiceImpl implements DepartmentService {
                 Mono<TeacherDTO> teacherDTOMono = EntityFetcher.getTeacherDTOMono(department, teacherRepository);
                 return ResponseDtoBuilder.getResponseDepartmentDTOMono(department, teacherDTOMono);
             })
-            .log()
             .doOnSuccess(dto -> log.info("Department successfully found with id: {}", id))
             .doOnError(error -> log.error("Failed to found department with id: {}", id, error));
     }
@@ -71,8 +68,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             .flatMap(departmentRepository::delete)
             .doOnSuccess(studentDeleted -> log.info("Department with id: {} successfully deleted", id))
             .doOnError(error -> log.error("Failed to delete department", error))
-            .then(Mono.just(new DeleteResponseDTO("Department deleted successfully")))
-            .log();
+            .then(Mono.just(new DeleteResponseDTO("Department deleted successfully")));
     }
 
     @Transactional
@@ -87,8 +83,7 @@ public class DepartmentServiceImpl implements DepartmentService {
                     .flatMap(updatedDepartment -> getById(updatedDepartment.getId()));
             })
             .doOnSuccess(updatedDepartment -> log.info("Department with id: {} successfully updated", id))
-            .doOnError(error -> log.error("Failed to update department with id: {}", id, error))
-            .log();
+            .doOnError(error -> log.error("Failed to update department with id: {}", id, error));
     }
 
     @Transactional
@@ -105,8 +100,7 @@ public class DepartmentServiceImpl implements DepartmentService {
                 return saveRelationDepartmentWithTeacher(department, teacher);
             })
             .doOnSuccess(studentDeleted -> log.info("Successfully added teacher with id: {} to department with id: {}", teacherId, departmentId))
-            .doOnError(error -> log.error("Failed to added teacher with id: {} to department with id: {}", teacherId, departmentId, error))
-            .log();
+            .doOnError(error -> log.error("Failed to added teacher with id: {} to department with id: {}", teacherId, departmentId, error));
     }
 
     private Mono<ResponseDepartmentDTO> saveRelationDepartmentWithTeacher(Department department, Teacher teacher) {
@@ -124,8 +118,7 @@ public class DepartmentServiceImpl implements DepartmentService {
                     department2.getName(),
                     headOfDepartment
                 );
-            })
-            .log();
+            });
     }
 
 }

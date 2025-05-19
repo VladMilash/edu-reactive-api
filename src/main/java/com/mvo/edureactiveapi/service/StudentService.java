@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 public interface StudentService {
     Mono<ResponseStudentDTO> save(StudentTransientDTO studentTransientDTO);
-    Flux<ResponseStudentDTO> getAll();
+    Flux<ResponseStudentDTO> getAll(int page, int size);
     Mono<ResponseStudentDTO> getById(Long id);
     Mono<ResponseStudentDTO> update(Long id, StudentTransientDTO studentTransientDTO);
     Mono<DeleteResponseDTO> delete(Long id);

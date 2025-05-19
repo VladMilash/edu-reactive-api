@@ -21,8 +21,9 @@ public class CoursesRestControllerV1 {
     }
 
     @GetMapping
-    Flux<ResponseCoursesDTO> getAll() {
-        return service.getAll();
+    Flux<ResponseCoursesDTO> getAll(@RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int size) {
+        return service.getAll(page, size);
     }
 
     @GetMapping("{id}")

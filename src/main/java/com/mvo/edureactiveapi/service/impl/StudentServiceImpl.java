@@ -50,20 +50,19 @@ public class StudentServiceImpl implements StudentService {
                 return studentRepository.save(transientStudent)
                     .map(studentMapper::toResponseStudentDTO)
                     .doOnSuccess(dto -> log.info("Student successfully created with id: {}", dto.id()))
-                    .doOnError(error -> log.error("Failed to saving student", error))
-                    .log();
+                    .doOnError(error -> log.error("Failed to saving student", error));
             });
     }
 
     @Transactional
     @Override
-    public Flux<ResponseStudentDTO> getAll() {
-        return studentRepository.findAll()
+    public Flux<ResponseStudentDTO> getAll(int page, int size) {
+        long offset = (long) page * size;
+        return studentRepository.findAllWithPagination(size, offset)
             .flatMap(student -> {
                 Flux<CourseDTO> courseDTOFlux = EntityFetcher.getCourseDTOFlux(student, studentCourseRepository, courseRepository, teacherRepository);
                 return ResponseDtoBuilder.getResponseStudentDTOMono(student, courseDTOFlux);
             })
-            .log()
             .doOnComplete(() -> log.info("Successfully retrieved all students"))
             .doOnError(error -> log.error("Failed to found all students", error));
     }
@@ -126,7 +125,6 @@ public class StudentServiceImpl implements StudentService {
                         }
                     });
             })
-            .log()
             .doOnSuccess(dto -> log.info("Successfully set relation between student {} and course {}", studentId, courseId))
             .doOnError(error -> log.error("Failed to set relation between student {} and course {}", studentId, courseId, error));
     }
@@ -136,7 +134,6 @@ public class StudentServiceImpl implements StudentService {
     public Flux<CourseDTO> getStudentCourses(Long id) {
         Mono<Student> studentMono = EntityFetcher.getStudentMono(id, studentRepository);
         return studentMono.flatMapMany(student -> EntityFetcher.getCourseDTOFlux(student, studentCourseRepository, courseRepository, teacherRepository))
-            .log()
             .doOnComplete(() -> log.info("Courses for student with id: {} successfully found ", id))
             .doOnError(error -> log.error("Failed to found courses for student with id: {}", id, error));
     }
