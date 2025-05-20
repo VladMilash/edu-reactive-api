@@ -8,6 +8,7 @@ import com.mvo.edureactiveapi.config.PostgreTestcontainerConfig;
 import com.mvo.edureactiveapi.repository.CourseRepository;
 import com.mvo.edureactiveapi.repository.StudentCourseRepository;
 import com.mvo.edureactiveapi.repository.StudentRepository;
+import com.mvo.edureactiveapi.util.DataUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,13 +41,18 @@ public class ItStudentsRestControllerV1Tests {
 
     private StudentTransientDTO studentTransientDTO;
 
+    private Student student;
+
+    private Course course;
+
     @BeforeEach
     void setUp() {
-        studentTransientDTO = new StudentTransientDTO("test", "test@test.ru");
+        studentTransientDTO = DataUtil.getStudentTransientDTO();
+        student = DataUtil.getStudentEntity();
+        course = DataUtil.getCourseEntity();
+        studentCourseRepository.deleteAll().block();
         studentRepository.deleteAll().block();
         courseRepository.deleteAll().block();
-        studentCourseRepository.deleteAll().block();
-
     }
 
     @Test
@@ -75,8 +81,6 @@ public class ItStudentsRestControllerV1Tests {
     public void givenStudentTransientDTOWithDuplicateEmail_whenSaveStudent_thenErrorResponse() {
         // given
         String duplicateEmail = "duplicate@mail.com";
-        Student student = new Student();
-        student.setName("test");
         student.setEmail(duplicateEmail);
         studentRepository.save(student).block();
         StudentTransientDTO studentTransientDTOWithDuplicateEmail = new StudentTransientDTO("new", duplicateEmail);
@@ -99,22 +103,19 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Test get student by id functionality")
     public void givenStudentId_whenGetStudent_thenSuccessResponse() {
         // given
-        Student student = new Student();
-        student.setName("test");
-        student.setEmail("test@test.ru");
-        Student savedStudent = studentRepository.save(student).block();
+        studentRepository.save(student).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.get()
-            .uri("/api/v1/students/{id}", savedStudent.getId())
+            .uri("/api/v1/students/{id}", student.getId())
             .exchange();
 
         // then
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.name").isEqualTo("test")
-            .jsonPath("$.email").isEqualTo("test@test.ru")
+            .jsonPath("$.name").isEqualTo(student.getName())
+            .jsonPath("$.email").isEqualTo(student.getEmail())
             .jsonPath("$.courses").isEmpty();
     }
 
@@ -140,9 +141,6 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Test get all students functionality")
     public void givenGetStudentsRequest_whenGetStudents_thenNonEmptyList() {
         // given
-        Student student = new Student();
-        student.setName("new");
-        student.setEmail("new@new.ru");
         studentRepository.save(student).block();
 
         // when
@@ -161,15 +159,11 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Update student by id functionality")
     public void givenStudentId_whenUpdateStudent_thenSuccessResponse() {
         // given
-        Student student = new Student();
-        student.setName("new");
-        student.setEmail("new@new.ru");
-        Student savedStudent = studentRepository.save(student).block();
+        studentRepository.save(student).block();
 
         // when
-        assert savedStudent != null;
         WebTestClient.ResponseSpec result = webTestClient.put()
-            .uri("/api/v1/students/{id}", savedStudent.getId())
+            .uri("/api/v1/students/{id}", student.getId())
             .contentType(MediaType.APPLICATION_JSON)
             .body(Mono.just(studentTransientDTO), StudentTransientDTO.class)
             .exchange();
@@ -178,8 +172,8 @@ public class ItStudentsRestControllerV1Tests {
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.name").isEqualTo("test")
-            .jsonPath("$.email").isEqualTo("test@test.ru")
+            .jsonPath("$.name").isEqualTo(studentTransientDTO.name())
+            .jsonPath("$.email").isEqualTo(studentTransientDTO.email())
             .jsonPath("$.courses").isEmpty();
     }
 
@@ -207,14 +201,11 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Delete student by id functionality")
     public void givenStudentId_whenDeleteStudent_thenDeletedResponse() {
         // given
-        Student student = new Student();
-        student.setName("new");
-        student.setEmail("new@new.ru");
-        Student savedStudent = studentRepository.save(student).block();
+        studentRepository.save(student).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.delete()
-            .uri("/api/v1/students/{id}", savedStudent.getId())
+            .uri("/api/v1/students/{id}", student.getId())
             .exchange();
 
         // then
@@ -245,31 +236,24 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Test get student courses functionality")
     public void givenStudentId_whenGetStudentCourses_thenSuccessResponse() {
         // given
-        Student student = new Student();
-        student.setName("test");
-        student.setEmail("test@test.ru");
-        Student savedStudent = studentRepository.save(student).block();
-        Course course = new Course();
-        course.setTitle("course");
-        Course savedCourse = courseRepository.save(course).block();
-        studentRepository.save(savedStudent).block();
-        courseRepository.save(savedCourse).block();
+        studentRepository.save(student).block();
+        courseRepository.save(course).block();
         StudentCourse studentCourse = new StudentCourse();
-        studentCourse.setCourseId(savedCourse.getId());
-        studentCourse.setStudentId(savedStudent.getId());
+        studentCourse.setCourseId(course.getId());
+        studentCourse.setStudentId(student.getId());
         studentCourseRepository.save(studentCourse).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.get()
-            .uri("/api/v1/students/{id}/courses", savedStudent.getId())
+            .uri("/api/v1/students/{id}/courses", student.getId())
             .exchange();
 
         // then
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$").isArray()
-            .jsonPath("$[0].id").isEqualTo(savedCourse.getId())
-            .jsonPath("$[0].title").isEqualTo("course")
+            .jsonPath("$[0].id").isEqualTo(course.getId())
+            .jsonPath("$[0].title").isEqualTo(course.getTitle())
             .jsonPath("$[0].teacher").isEmpty();
     }
 
@@ -277,17 +261,12 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Set relation student-course functionality")
     public void givenStudentIdAndCourseId_whenSetRelationWithCourse_thenSuccessResponse() {
         // given
-        Student student = new Student();
-        student.setName("test");
-        student.setEmail("test@test.ru");
-        Student savedStudent = studentRepository.save(student).block();
-        Course course = new Course();
-        course.setTitle("course");
-        Course savedCourse = courseRepository.save(course).block();
+        studentRepository.save(student).block();
+        courseRepository.save(course).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.post()
-            .uri("/api/v1/students/{studentId}/courses/{courseId}", savedStudent.getId(), savedCourse.getId())
+            .uri("/api/v1/students/{studentId}/courses/{courseId}", student.getId(), course.getId())
             .exchange();
 
         // then
@@ -297,8 +276,8 @@ public class ItStudentsRestControllerV1Tests {
             .jsonPath("$.name").isEqualTo("test")
             .jsonPath("$.email").isEqualTo("test@test.ru")
             .jsonPath("$.courses").isArray()
-            .jsonPath("$.courses[0].id").isEqualTo(savedCourse.getId())
-            .jsonPath("$.courses[0].title").isEqualTo(savedCourse.getTitle())
+            .jsonPath("$.courses[0].id").isEqualTo(course.getId())
+            .jsonPath("$.courses[0].title").isEqualTo(course.getTitle())
             .jsonPath("$.courses[0].teacher").isEmpty();
     }
 
@@ -306,14 +285,12 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Set relation student-course with incorrect student id and correct course id functionality")
     public void givenIncorrectStudentIdAndCorrectCourseId_whenSetRelationWitStudentCourse_thenErrorResponse() {
         // given
-        Course course = new Course();
-        course.setTitle("course");
-        Course savedCourse = courseRepository.save(course).block();
+        courseRepository.save(course).block();
         long incorrectStudentId = 200L;
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.post()
-            .uri("/api/v1/students/{studentId}/courses/{courseId}", incorrectStudentId, savedCourse.getId())
+            .uri("/api/v1/students/{studentId}/courses/{courseId}", incorrectStudentId, course.getId())
             .exchange();
 
         // then
@@ -327,15 +304,12 @@ public class ItStudentsRestControllerV1Tests {
     @DisplayName("Set relation student-course with correct student id and incorrect course id functionality")
     public void givenCorrectStudentIdAndIncorrectCourseId_whenSetRelationWitStudentCourse_thenErrorResponse() {
         // given
-        Student student = new Student();
-        student.setName("test");
-        student.setEmail("test@test.ru");
-        Student savedStudent = studentRepository.save(student).block();
+        studentRepository.save(student).block();
         long incorrectCourseId = 200L;
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.post()
-            .uri("/api/v1/students/{studentId}/courses/{courseId}", savedStudent.getId(), incorrectCourseId)
+            .uri("/api/v1/students/{studentId}/courses/{courseId}", student.getId(), incorrectCourseId)
             .exchange();
 
         // then

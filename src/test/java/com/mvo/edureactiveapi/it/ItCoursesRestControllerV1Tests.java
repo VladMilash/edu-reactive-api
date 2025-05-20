@@ -4,6 +4,7 @@ import com.mvo.edureactiveapi.dto.requestdto.CourseTransientDTO;
 import com.mvo.edureactiveapi.entity.Course;
 import com.mvo.edureactiveapi.config.PostgreTestcontainerConfig;
 import com.mvo.edureactiveapi.repository.CourseRepository;
+import com.mvo.edureactiveapi.util.DataUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,10 +31,12 @@ public class ItCoursesRestControllerV1Tests {
 
     private CourseTransientDTO courseTransientDTO;
 
+    private Course course;
+
     @BeforeEach
     void setUp() {
-        courseTransientDTO = new CourseTransientDTO("test");
-        courseRepository.deleteAll().block();
+        courseTransientDTO = DataUtil.getCourseTransientDTO();
+        course = DataUtil.getCourseEntity();
     }
 
     @Test
@@ -61,20 +64,18 @@ public class ItCoursesRestControllerV1Tests {
     @DisplayName("Test get course by id functionality")
     public void givenCourseId_whenGetCourse_thenSuccessResponse() {
         // given
-        Course course = new Course();
-        course.setTitle("Test");
-        Course savedCourse = courseRepository.save(course).block();
+        courseRepository.save(course).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.get()
-            .uri("/api/v1/courses/{id}", savedCourse.getId())
+            .uri("/api/v1/courses/{id}", course.getId())
             .exchange();
 
         // then
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.title").isEqualTo("Test")
+            .jsonPath("$.title").isEqualTo(course.getTitle())
             .jsonPath("$.teacher").isEmpty()
             .jsonPath("$.students").isEmpty();
     }
@@ -101,8 +102,6 @@ public class ItCoursesRestControllerV1Tests {
     @DisplayName("Test get all courses functionality")
     public void givenGetCoursesRequest_whenGetCourses_thenNonEmptyList() {
         // given
-        Course course = new Course();
-        course.setTitle("Test");
         courseRepository.save(course).block();
 
         // when
@@ -121,13 +120,11 @@ public class ItCoursesRestControllerV1Tests {
     @DisplayName("Update course by id functionality")
     public void givenCourseId_whenUpdateCourse_thenSuccessResponse() {
         // given
-        Course course = new Course();
-        course.setTitle("New");
-        Course savedCourse = courseRepository.save(course).block();
+        courseRepository.save(course).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.put()
-            .uri("/api/v1/courses/{id}", savedCourse.getId())
+            .uri("/api/v1/courses/{id}", course.getId())
             .contentType(MediaType.APPLICATION_JSON)
             .body(Mono.just(courseTransientDTO), CourseTransientDTO.class)
             .exchange();
@@ -136,7 +133,7 @@ public class ItCoursesRestControllerV1Tests {
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.title").isEqualTo("test")
+            .jsonPath("$.title").isEqualTo(courseTransientDTO.title())
             .jsonPath("$.teacher").isEmpty()
             .jsonPath("$.students").isEmpty();
     }
@@ -165,13 +162,11 @@ public class ItCoursesRestControllerV1Tests {
     @DisplayName("Delete course by id functionality")
     public void givenCourseId_whenDeleteCourse_thenDeletedResponse() {
         // given
-        Course course = new Course();
-        course.setTitle("New");
-        Course savedCourse = courseRepository.save(course).block();
+        courseRepository.save(course).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.delete()
-            .uri("/api/v1/courses/{id}", savedCourse.getId())
+            .uri("/api/v1/courses/{id}", course.getId())
             .exchange();
 
         // then

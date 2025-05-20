@@ -6,6 +6,7 @@ import com.mvo.edureactiveapi.entity.Teacher;
 import com.mvo.edureactiveapi.config.PostgreTestcontainerConfig;
 import com.mvo.edureactiveapi.repository.CourseRepository;
 import com.mvo.edureactiveapi.repository.TeacherRepository;
+import com.mvo.edureactiveapi.util.DataUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,9 +35,15 @@ public class ItTeachersRestControllerV1Tests {
 
     private TeacherTransientDTO teacherTransientDTO;
 
+    private Teacher teacher;
+
+    private Course course;
+
     @BeforeEach
     void setUp() {
-        teacherTransientDTO = new TeacherTransientDTO("test");
+        teacherTransientDTO = DataUtil.getTeacherTransientDTO();
+        teacher = DataUtil.getTeacherEntity();
+        course = DataUtil.getCourseEntity();
         teacherRepository.deleteAll().block();
         courseRepository.deleteAll().block();
     }
@@ -67,20 +74,18 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Test get teacher by id functionality")
     public void givenTeacherId_whenGetDepartment_thenSuccessResponse() {
         // given
-        Teacher teacher = new Teacher();
-        teacher.setName("test");
-        Teacher savedTeacher = teacherRepository.save(teacher).block();
+        teacherRepository.save(teacher).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.get()
-            .uri("/api/v1/teachers/{id}", savedTeacher.getId())
+            .uri("/api/v1/teachers/{id}", teacher.getId())
             .exchange();
 
         // then
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.name").isEqualTo("test")
+            .jsonPath("$.name").isEqualTo(teacher.getName())
             .jsonPath("$.courses").isArray()
             .jsonPath("$.courses").isEmpty()
             .jsonPath("$.department").isEmpty();
@@ -108,8 +113,6 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Test get all teachers functionality")
     public void givenGetTeachersRequest_whenGetStudents_thenNonEmptyList() {
         // given
-        Teacher teacher = new Teacher();
-        teacher.setName("test");
         teacherRepository.save(teacher).block();
 
         // when
@@ -128,13 +131,11 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Update teacher by id functionality")
     public void givenDepartmentId_whenUpdateDepartment_thenSuccessResponse() {
         // given
-        Teacher teacher = new Teacher();
-        teacher.setName("new");
-        Teacher savedTeacher = teacherRepository.save(teacher).block();
+        teacherRepository.save(teacher).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.put()
-            .uri("/api/v1/teachers/{id}", savedTeacher.getId())
+            .uri("/api/v1/teachers/{id}", teacher.getId())
             .contentType(MediaType.APPLICATION_JSON)
             .body(Mono.just(teacherTransientDTO), TeacherTransientDTO.class)
             .exchange();
@@ -143,7 +144,7 @@ public class ItTeachersRestControllerV1Tests {
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.name").isEqualTo("test")
+            .jsonPath("$.name").isEqualTo(teacher.getName())
             .jsonPath("$.courses").isArray()
             .jsonPath("$.courses").isEmpty()
             .jsonPath("$.department").isEmpty();
@@ -173,13 +174,11 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Delete teacher by id functionality")
     public void givenTeacherId_whenDeleteTeacher_thenDeletedResponse() {
         // given
-        Teacher teacher = new Teacher();
-        teacher.setName("new");
-        Teacher savedTeacher = teacherRepository.save(teacher).block();
+        teacherRepository.save(teacher).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.delete()
-            .uri("/api/v1/teachers/{id}", savedTeacher.getId())
+            .uri("/api/v1/teachers/{id}", teacher.getId())
             .exchange();
 
         // then
@@ -210,25 +209,21 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Set relation teacher-course functionality")
     public void givenTeacherIdAndCourseId_whenSetRelationWitTeacherCourse_thenSuccessResponse() {
         // given
-        Teacher teacher = new Teacher();
-        teacher.setName("test");
-        Teacher savedTeacher = teacherRepository.save(teacher).block();
-        Course course = new Course();
-        course.setTitle("test");
-        Course savedCourse = courseRepository.save(course).block();
+        teacherRepository.save(teacher).block();
+        courseRepository.save(course).block();
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.post()
-            .uri("/api/v1/teachers/{teacherId}/courses/{courseId}", savedTeacher.getId(), savedCourse.getId())
+            .uri("/api/v1/teachers/{teacherId}/courses/{courseId}", teacher.getId(), course.getId())
             .exchange();
 
         // then
         result.expectStatus().isOk()
             .expectBody()
             .jsonPath("$.id").exists()
-            .jsonPath("$.title").isEqualTo("test")
+            .jsonPath("$.title").isEqualTo(course.getTitle())
             .jsonPath("$.teacher.id").exists()
-            .jsonPath("$.teacher.name").isEqualTo("test")
+            .jsonPath("$.teacher.name").isEqualTo(teacher.getName())
             .jsonPath("$.students").isEmpty();
     }
 
@@ -236,14 +231,12 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Set relation teacher-course with incorrect teacher id and correct course id functionality")
     public void givenIncorrectTeacherIdAndCorrectCourseId_whenSetRelationWitTeacherCourse_thenErrorResponse() {
         // given
-        Course course = new Course();
-        course.setTitle("test");
-        Course savedCourse = courseRepository.save(course).block();
+        courseRepository.save(course).block();
         long incorrectTeacherId = 200L;
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.post()
-            .uri("/api/v1/teachers/{teacherId}/courses/{courseId}", incorrectTeacherId, savedCourse.getId())
+            .uri("/api/v1/teachers/{teacherId}/courses/{courseId}", incorrectTeacherId, course.getId())
             .exchange();
 
         // then
@@ -257,14 +250,12 @@ public class ItTeachersRestControllerV1Tests {
     @DisplayName("Set relation teacher-course with correct teacher id and incorrect course id functionality")
     public void givenCorrectTeacherIdAndIncorrectCourseId_whenSetRelationWitTeacherCourse_thenErrorResponse() {
         // given
-        Teacher teacher = new Teacher();
-        teacher.setName("test");
-        Teacher savedTeacher = teacherRepository.save(teacher).block();
+        teacherRepository.save(teacher).block();
         long incorrectCourseId = 200L;
 
         // when
         WebTestClient.ResponseSpec result = webTestClient.post()
-            .uri("/api/v1/teachers/{teacherId}/courses/{courseId}", savedTeacher.getId(), incorrectCourseId)
+            .uri("/api/v1/teachers/{teacherId}/courses/{courseId}", teacher.getId(), incorrectCourseId)
             .exchange();
 
         // then
